@@ -13,6 +13,7 @@
 
 #include <cstdio>
 #include <string>
+#include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <list>
@@ -20,6 +21,7 @@
 #include <filesystem>
 #include <lmcons.h>
 #include <vector>
+#include <cstdlib>
 
 // TO DO LIST:
 // Iteration depth is too shallow 
@@ -66,6 +68,45 @@ vector<string> iter_directory(string path)
     }
 
     return t;
+}
+
+// Retrieves all currently running tasks
+FILE* retrieve_tasks(){ return _popen("tasklist", "r"); }
+
+void investigate_tasks()
+{
+    // Iterates through all running tasks and investigates the resources they use
+    // Recommends killing them if they use an insane amount of resources
+
+    FILE* tasks = retrieve_tasks();
+
+    char buffer[256];
+    while (fgets(buffer, sizeof(buffer), tasks) != NULL) {
+        string line = buffer;
+        int line_len = line.length();
+
+        if (line_len > 1)
+        {
+            // Format the task manager into only the things we want
+            string name = line.substr(0, 15);
+            bool is_service = line.find("Services");
+            string mem_usage = line.substr(line_len-10, line_len);
+            
+            // Format out task manager garbage
+            if (mem_usage.find("===") == string::npos && mem_usage.find("M") == string::npos)
+            {
+                mem_usage.erase(remove(mem_usage.begin(), mem_usage.end(), ','), mem_usage.end()); // Format out commas
+                mem_usage.erase(remove(mem_usage.begin(), mem_usage.end(), 'K'), mem_usage.end()); // Format out K
+ 
+                int memory = stoi(mem_usage);
+                
+                if (memory >= 15000) // Anything below 15MB isn't even worth culling
+                {
+                    cout << name << " is using: " << memory / 1000 << " megabytes! \n";
+                }
+            }
+        }
+    }
 }
 
 void get_directory(string path)
@@ -184,7 +225,8 @@ int main() {
     // retrieve windows type
     RTL_OSVERSIONINFOW osVersion = GetRealOSVersion();
     string win_type = "";
-    get_files();
+//  get_files();
+    investigate_tasks();
     
     // swap between the two versions depending on user response
     if (osVersion.dwMajorVersion == 10)
