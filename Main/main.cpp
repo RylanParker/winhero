@@ -1,3 +1,16 @@
+// WINHERO
+// Winhero is a open-source windows optimizer and anti-virus
+// Runs basic commands to disable telemetry and optimize windows (extremely shallow optimization)
+// Scans through files to compare meta-data and whatnot to find malware
+// Iterate through running tasks and figur eout disk usage
+// Looks for hidden window registry settings to optimize
+// Max out refresh rate
+// Reboots computer after optimization to finish clean up
+
+// To research
+// hidusbf
+// TCPOptimizer
+
 #include <cstdio>
 #include <string>
 #include <iostream>
@@ -8,6 +21,12 @@
 #include <lmcons.h>
 #include <vector>
 
+// TO DO LIST:
+// Iteration depth is too shallow 
+// Compare metadata and other data to find malware
+// Potentialy UI for user convienience
+
+
 namespace fs = std::filesystem;
 
 using namespace std;
@@ -15,8 +34,24 @@ using namespace std;
 typedef LONG NTSTATUS;
 typedef NTSTATUS(WINAPI* RtlGetVersionPtr)(PRTL_OSVERSIONINFOW);
 
+vector<string> retrieve_files(string path)
+{
+    // Iterate through a directory and add it a folder
+    vector<string> files;
+    std::error_code ec;
+
+    for (const auto& entry : fs::directory_iterator(path, fs::directory_options::skip_permission_denied, ec))
+    {
+        if (entry.is_regular_file(ec))
+            files.push_back(entry.path().string());
+    }
+
+    return files;
+}
+
 vector<string> iter_directory(string path)
 {
+    // Iterate through a directory and add it a folder
     vector<string> t;
 
     if (fs::is_directory(path))
@@ -33,30 +68,40 @@ vector<string> iter_directory(string path)
     return t;
 }
 
-
 void get_directory(string path)
 {
-    vector<string> read_files;
-    vector<string> new_files = iter_directory(path);
+    vector<string> files;
+    vector<string> read_dir;
+    vector<string> new_dir = iter_directory(path);
 
-    for (int i = 0; i < new_files.size(); i++)
+    for (int i = 0; i < new_dir.size(); i++)
     {
-        read_files.push_back(new_files[i]);
-        vector<string> found_files = iter_directory(new_files[i]); // get the current file from the found directories
+        read_dir.push_back(new_dir[i]);
+        vector<string> found_files = iter_directory(new_dir[i]); // get the current file from the found directories
         cout << "okay";
 
         for (int x = 0; x < found_files.size(); x++) // go through each new file and append it, we will search them later
         {
-            new_files.push_back(found_files[x]); // append it to new files
+            new_dir.push_back(found_files[x]); // append it to new files
         }
 
-        new_files.erase(new_files.begin() + i); // if the wrong file is removed, its probably coming from here
+        new_dir.erase(new_dir.begin() + i); // if the wrong file is removed, its probably coming from here
     }
 
-    for (int i = 0; i < read_files.size(); i++)
+    for (int i = 0; i < read_dir.size(); i++)
     {
-        cout << read_files[i];
+        vector<string> t = retrieve_files(read_dir[i]);
+        
+        for (int x = 0; x < t.size(); x++)
+        {
+            cout << t[x] << "\n";
+        }
     }
+
+/*     for (int i = 0; i < read_dir.size(); i++)
+    {
+        cout << read_dir[i];
+    } */
 
 }
 
