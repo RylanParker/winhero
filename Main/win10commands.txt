@@ -1,0 +1,18 @@
+dism.exe /online /cleanup-image /startcomponentcleanup
+sc stop SysMain
+defrag C: /O
+sfc /scannow
+del /q/f/s %TEMP%\
+Clear-RecycleBin -Force
+sc config DiagTrack start= disabled
+sc config dmwappushservice start= disabled
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo" /v Enabled /t REG_DWORD /d 0 /f
+net stop wsearch
+sc config WSearch start= disabled
+ipconfig /flushdns
+netsh winsock reset
+netsh int ip reset
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v AllowTelemetry /t REG_DWORD /d 0 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization" /v DownloadMode /t REG_DWORD /d 99 /f
+Delete-DeliveryOptimizationCache -Force -IncludePinnedFiles
+sc config "SysMain" start=disabled
